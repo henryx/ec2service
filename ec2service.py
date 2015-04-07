@@ -2,11 +2,28 @@
 
 __author__ = 'ebianchi'
 
-from bottle import route, run
+import bottle
+import json
 
-@route('/')
+@bottle.route("/")
 def hello():
     return "Hello World!"
 
+@bottle.route("/machines/", method="GET")
+def machine_list():
+    return json.dumps({"result": "ko", "message": "Not implemented"})
+
+@bottle.route("/machines/<name>", method="GET")
+def machine_show(name):
+    return json.dumps({"result": "ko", "message": "List for machine " + name + " not implemented"})
+
+@bottle.route("/machines/<name>/start", method="GET")
+def machine_command(name):
+    return json.dumps({"result": "ko", "message": "Start command for machine " + name + " not implemented"})
+
+@bottle.route("/machines/<name>/stop", method="GET")
+def machine_command(name):
+    return json.dumps({"result": "ko", "message": "Stop command for machine " + name + " not implemented"})
+
 if __name__ == "__main__":
-    run(host='localhost', port=8080, debug=False)
+    bottle.run(host='localhost', port=8080, debug=False)
