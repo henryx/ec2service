@@ -33,9 +33,10 @@ def list_ec2_instances(ec2conn, instance_id=None):
                     "tags": instance.tags,
                     "state": instance.state,
                     "launch time": instance.launch_time,
+                    "network": [],
+                    "security group": []
                 }
 
-                details["network"] = []
                 for interface in instance.interfaces:
                     details_interface = {
                         "public ip": interface.publicIp,
@@ -46,7 +47,6 @@ def list_ec2_instances(ec2conn, instance_id=None):
                     details["network"].append(details_interface)
 
                 # TODO: check if is useful to implement in external function
-                details["security group"] = []
                 for group in instance.groups:
                     details_group = {
                         "id": group.id,
