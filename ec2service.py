@@ -62,7 +62,7 @@ def list_ec2_instances(ec2conn, instance_id=None):
 def hello():
     return "Hello World!"
 
-@bottle.route("/machines/", method="GET")
+@bottle.route("/machines", method="GET")
 def machine_list():
     data = {}
     ec2 = open_ec2()
