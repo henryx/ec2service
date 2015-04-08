@@ -11,14 +11,18 @@ import sys
 # FIXME: for commodity, config file is declared as global variable. Change in future
 CFG = configparser.ConfigParser()
 
-def open_ec2():
+def open_ec2(region=None):
     awskey = CFG.get("aws", "key")
     awssecret = CFG.get("aws", "secret")
-    region = CFG.get("aws", "region")
+    if region:
+        ec2 = boto.ec2.connect_to_region(region,
+                                         aws_access_key_id=awskey,
+                                         aws_secret_access_key=awssecret)
+    else:
+        ec2 = boto.ec2.connect_to_region(CFG.get("aws", "region"),
+                                         aws_access_key_id=awskey,
+                                         aws_secret_access_key=awssecret)
 
-    ec2 = boto.ec2.connect_to_region(region,
-                                     aws_access_key_id=awskey,
-                                     aws_secret_access_key=awssecret)
     return ec2
 
 def list_ec2_instances(ec2conn, instance_id=None):
@@ -65,7 +69,7 @@ def hello():
 @bottle.route("/machines", method="GET")
 def machine_list():
     data = {}
-    ec2 = open_ec2()
+    ec2 = open_ec2(region=bottle.request.query.region)
     machines = list_ec2_instances(ec2)
     ec2.close()
 
