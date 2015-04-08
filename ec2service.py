@@ -27,30 +27,33 @@ def list_ec2_instances(ec2conn, instance_id=None):
     for reservation in reservations:
         for instance in reservation.instances:
             if "managed" in instance.tags and instance.tags["managed"] == "auto":
-                details = {}
-
-                details["id"] = instance.id
-                details["placement"] = instance.placement
-                details["tags"] = instance.tags
-                details["state"] = instance.state
-                details["launch time"] = instance.launch_time
+                details = {
+                    "id": instance.id,
+                    "placement": instance.placement,
+                    "tags": instance.tags,
+                    "state": instance.state,
+                    "launch time": instance.launch_time,
+                }
 
                 details["network"] = []
                 for interface in instance.interfaces:
-                    details_interface = {}
-                    details_interface["public ip"] = interface.publicIp
-                    details_interface["public dns"] = interface.publicDnsName # TODO: check public IP resolution in DNS
-                    details_interface["private dns"] = interface.privateDnsName
-                    details_interface["private ip"] = interface.private_ip_address
+                    details_interface = {
+                        "public ip": interface.publicIp,
+                        "public dns": interface.publicDnsName,  # TODO: check public IP resolution in DNS
+                        "private dns": interface.privateDnsName,
+                        "private ip": interface.private_ip_address,
+                    }
                     details["network"].append(details_interface)
 
                 # TODO: check if is useful to implement in external function
                 details["security group"] = []
                 for group in instance.groups:
-                    details_group = {}
-                    details_group["id"] = group.id
-                    details_group["name"] = group.name
+                    details_group = {
+                        "id": group.id,
+                        "name": group.name,
+                    }
                     details["security group"].append(details_group)
+
                 results.append(details)
 
     return results
