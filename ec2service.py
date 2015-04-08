@@ -67,6 +67,8 @@ def machine_list():
     data = {}
     ec2 = open_ec2()
     machines = list_ec2_instances(ec2)
+    ec2.close()
+
     if len(machines) > 0:
         data["result"] = "ok"
         data["machines"] = machines
