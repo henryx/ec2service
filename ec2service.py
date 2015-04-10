@@ -119,7 +119,19 @@ def machine_list():
 
 @bottle.route("/machines/<name>", method="GET")
 def machine_show(name):
-    return json.dumps({"result": "ko", "message": "List for machine " + name + " not implemented"})
+    try:
+        ec2 = open_ec2(region=bottle.request.query.region)
+        machines = list_ec2_instances(ec2, name)
+        ec2.close()
+
+        if len(machines) > 0:
+            data = {"result": "ok", "machine": machines}
+        else:
+            raise bottle.HTTPError(status=500, body="No managed machines")
+    except ValueError as err:
+        raise bottle.HTTPError(status=500, body=str(err))
+
+    return json.dumps(data)
 
 @bottle.route("/machines/<name>/start", method="GET")
 def machine_command(name):
