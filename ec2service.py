@@ -11,17 +11,32 @@ import sys
 # FIXME: for commodity, config file is declared as global variable. Change in future
 CFG = configparser.ConfigParser()
 
+# AWS Available regions
+REGIONS = [
+    "us-east-1",  # North Virginia
+    "us-west-1",  # North California
+    "us-west-2",  # Oregon
+    "eu-west-1",  # Ireland
+    "eu-central-1",  # Frankfurt
+    "ap-southeast-1",  # Singapore
+    "ap-northeast-1",  # Tokyo
+    "ap-southeast-2",  # Sydney
+    "sa-east-1",  # Sao Paulo
+]
+
 def open_ec2(region=None):
     awskey = CFG.get("aws", "key")
     awssecret = CFG.get("aws", "secret")
-    if region:
-        ec2 = boto.ec2.connect_to_region(region,
-                                         aws_access_key_id=awskey,
-                                         aws_secret_access_key=awssecret)
-    else:
-        ec2 = boto.ec2.connect_to_region(CFG.get("aws", "region"),
-                                         aws_access_key_id=awskey,
-                                         aws_secret_access_key=awssecret)
+    awsregion = region or CFG.get("aws", "region")
+
+    if awsregion not in REGIONS:
+        raise ValueError('Region "{}" not valid'.format(awsregion))
+
+    ec2 = boto.ec2.connect_to_region(awsregion,
+                                     aws_access_key_id=awskey,
+                                     aws_secret_access_key=awssecret)
+    if not ec2:
+        raise ValueError("Problem when connecting to EC2")
 
     return ec2
 
