@@ -77,6 +77,10 @@ def list_ec2_instances(ec2conn, instance_id=None):
 
     return results
 
+@bottle.error(500)
+def error500(error):
+    return json.dumps({"result": "ko", "message": error.body})
+
 @bottle.route("/")
 def hello():
     return "Hello World!"
@@ -91,9 +95,9 @@ def machine_list():
         if len(machines) > 0:
             data = {"result": "ok", "machines": machines}
         else:
-            data = {"result": "ko", "message": "No managed machines"}
-    except Exception as err:
-        data = {"result": "ko", "message": "{}".format(err)}
+            raise bottle.HTTPError(status=500, body="No managed machines")
+    except ValueError as err:
+        raise bottle.HTTPError(status=500, body=str(err))
 
     return json.dumps(data)
 
