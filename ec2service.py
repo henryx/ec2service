@@ -41,55 +41,29 @@ def open_ec2(region=None):
     return ec2
 
 def list_ec2_instances(ec2conn, instance_id=None):
-    def list_interfaces(interfaces):
-        result = []
-        for interface in interfaces:
-            details_interface = {
-                "public ip": interface.publicIp,
-                "public dns": interface.publicDnsName,  # TODO: check public IP resolution in DNS
-                "private dns": interface.privateDnsName,
-                "private ip": interface.private_ip_address,
-            }
-            result.append(details_interface)
-        return result
-
-    def list_security_groups(groups):
-        result = []
-        for group in groups:
-            details_group = {
-                "id": group.id,
-                "name": group.name,
-            }
-            result.append(details_group)
-        return result
-
     results = []
-    reservations = ec2conn.get_all_reservations()
-    for reservation in reservations:
+
+    for reservation in ec2conn.get_all_reservations():
         for instance in reservation.instances:
             if "managed" in instance.tags and instance.tags["managed"] == "auto":
-                if not instance_id:
-                    details = {
-                        "id": instance.id,
-                        "placement": instance.placement,
-                        "tags": instance.tags,
-                        "state": instance.state,
-                        "launch time": instance.launch_time,
-                        "network": list_interfaces(instance.interfaces),
-                        "security group": list_security_groups(instance.groups)
-                    }
-                else:
-                    if instance_id == instance.id:
-                        details = {
-                            "id": instance.id,
-                            "placement": instance.placement,
-                            "tags": instance.tags,
-                            "state": instance.state,
-                            "launch time": instance.launch_time,
-                            "network": list_interfaces(instance.interfaces),
-                            "security group": list_security_groups(instance.groups)
-                        }
-                results.append(details)
+                details = {
+                    "id": instance.id,
+                    "placement": instance.placement,
+                    "tags": instance.tags,
+                    "state": instance.state,
+                    "launch time": instance.launch_time,
+                    "network": [dict(public_ip=i.publicIp,
+                                     # TODO: check public IP resolution in DNS
+                                     public_dns=i.publicDnsName,
+                                     private_dns=i.privateDnsName,
+                                     private_ip=i.private_ip_address)
+                                for i in instance.interfaces],
+                    "security group": [dict(id=g.id, name=g.name)
+                                       for g in instance.groups]
+                }
+
+                if not instance_id or instance_id == instance.id:
+                    results.append(details)
 
     return results
 
