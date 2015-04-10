@@ -68,15 +68,27 @@ def list_ec2_instances(ec2conn, instance_id=None):
     for reservation in reservations:
         for instance in reservation.instances:
             if "managed" in instance.tags and instance.tags["managed"] == "auto":
-                details = {
-                    "id": instance.id,
-                    "placement": instance.placement,
-                    "tags": instance.tags,
-                    "state": instance.state,
-                    "launch time": instance.launch_time,
-                    "network": list_interfaces(instance.interfaces),
-                    "security group": list_security_groups(instance.groups)
-                }
+                if not instance_id:
+                    details = {
+                        "id": instance.id,
+                        "placement": instance.placement,
+                        "tags": instance.tags,
+                        "state": instance.state,
+                        "launch time": instance.launch_time,
+                        "network": list_interfaces(instance.interfaces),
+                        "security group": list_security_groups(instance.groups)
+                    }
+                else:
+                    if instance_id == instance.id:
+                        details = {
+                            "id": instance.id,
+                            "placement": instance.placement,
+                            "tags": instance.tags,
+                            "state": instance.state,
+                            "launch time": instance.launch_time,
+                            "network": list_interfaces(instance.interfaces),
+                            "security group": list_security_groups(instance.groups)
+                        }
                 results.append(details)
 
     return results
