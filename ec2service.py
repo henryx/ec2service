@@ -41,6 +41,28 @@ def open_ec2(region=None):
     return ec2
 
 def list_ec2_instances(ec2conn, instance_id=None):
+    def list_interfaces(interfaces):
+        result = []
+        for interface in interfaces:
+            details_interface = {
+                "public ip": interface.publicIp,
+                "public dns": interface.publicDnsName,  # TODO: check public IP resolution in DNS
+                "private dns": interface.privateDnsName,
+                "private ip": interface.private_ip_address,
+            }
+            result.append(details_interface)
+        return result
+
+    def list_security_groups(groups):
+        result = []
+        for group in groups:
+            details_group = {
+                "id": group.id,
+                "name": group.name,
+            }
+            result.append(details_group)
+        return result
+
     results = []
     reservations = ec2conn.get_all_reservations()
     for reservation in reservations:
@@ -52,27 +74,9 @@ def list_ec2_instances(ec2conn, instance_id=None):
                     "tags": instance.tags,
                     "state": instance.state,
                     "launch time": instance.launch_time,
-                    "network": [],
-                    "security group": []
+                    "network": list_interfaces(instance.interfaces),
+                    "security group": list_security_groups(instance.groups)
                 }
-
-                for interface in instance.interfaces:
-                    details_interface = {
-                        "public ip": interface.publicIp,
-                        "public dns": interface.publicDnsName,  # TODO: check public IP resolution in DNS
-                        "private dns": interface.privateDnsName,
-                        "private ip": interface.private_ip_address,
-                    }
-                    details["network"].append(details_interface)
-
-                # TODO: check if is useful to implement in external function
-                for group in instance.groups:
-                    details_group = {
-                        "id": group.id,
-                        "name": group.name,
-                    }
-                    details["security group"].append(details_group)
-
                 results.append(details)
 
     return results
