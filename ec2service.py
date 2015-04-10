@@ -83,17 +83,18 @@ def hello():
 
 @bottle.route("/machines", method="GET")
 def machine_list():
-    data = {}
-    ec2 = open_ec2(region=bottle.request.query.region)
-    machines = list_ec2_instances(ec2)
-    ec2.close()
+    try:
+        ec2 = open_ec2(region=bottle.request.query.region)
+        machines = list_ec2_instances(ec2)
+        ec2.close()
 
-    if len(machines) > 0:
-        data["result"] = "ok"
-        data["machines"] = machines
-    else:
-        data["result"] = "ko"
-        data["message"] = "No managed machines"
+        if len(machines) > 0:
+            data = {"result": "ok", "machines": machines}
+        else:
+            data = {"result": "ko", "message": "No managed machines"}
+    except Exception as err:
+        data = {"result": "ko", "message": "{}".format(err)}
+
     return json.dumps(data)
 
 @bottle.route("/machines/<name>", method="GET")
