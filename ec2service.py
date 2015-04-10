@@ -11,25 +11,12 @@ import sys
 # FIXME: for commodity, config file is declared as global variable. Change in future
 CFG = configparser.ConfigParser()
 
-# AWS Available regions
-REGIONS = [
-    "us-east-1",  # North Virginia
-    "us-west-1",  # North California
-    "us-west-2",  # Oregon
-    "eu-west-1",  # Ireland
-    "eu-central-1",  # Frankfurt
-    "ap-southeast-1",  # Singapore
-    "ap-northeast-1",  # Tokyo
-    "ap-southeast-2",  # Sydney
-    "sa-east-1",  # Sao Paulo
-]
-
 def open_ec2(region=None):
     awskey = CFG.get("aws", "key")
     awssecret = CFG.get("aws", "secret")
     awsregion = region or CFG.get("aws", "region")
 
-    if awsregion not in REGIONS:
+    if not any(region.name == awsregion for region in boto.ec2.regions()):
         raise ValueError('Region "{}" not valid'.format(awsregion))
 
     ec2 = boto.ec2.connect_to_region(awsregion,
