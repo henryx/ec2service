@@ -8,6 +8,8 @@ import configparser
 import json
 import sys
 
+app = bottle.Bottle
+
 def load_cfg():
     cfg = configparser.ConfigParser()
     try:
@@ -63,19 +65,19 @@ def list_ec2_instances(ec2conn, instance_id=None):
 
     return results
 
-@bottle.hook('before_request')
+@app.hook('before_request')
 def strip_path():
     bottle.request.environ['PATH_INFO'] = bottle.request.environ['PATH_INFO'].rstrip('/')
 
-@bottle.error(500)
+@app.error(500)
 def error500(error):
     return json.dumps({"result": "ko", "message": error.body})
 
-@bottle.route("/")
+@app.route("/")
 def hello():
     return "Hello World!"
 
-@bottle.route("/machines", method="GET")
+@app.route("/machines", method="GET")
 def machine_list():
     try:
         ec2 = open_ec2(region=bottle.request.query.region)
@@ -91,7 +93,7 @@ def machine_list():
 
     return json.dumps(data)
 
-@bottle.route("/machines/<name>", method="GET")
+@app.route("/machines/<name>", method="GET")
 def machine_show(name):
     try:
         ec2 = open_ec2(region=bottle.request.query.region)
@@ -107,7 +109,7 @@ def machine_show(name):
 
     return json.dumps(data)
 
-@bottle.route("/machines/<name>/start", method="GET")
+@app.route("/machines/<name>/start", method="GET")
 def machine_command(name):
     try:
         ec2 = open_ec2(region=bottle.request.query.region)
@@ -118,7 +120,7 @@ def machine_command(name):
 
     return json.dumps({"result": "ok", "message": "Instance {} started".format(name)})
 
-@bottle.route("/machines/<name>/stop", method="GET")
+@app.route("/machines/<name>/stop", method="GET")
 def machine_command(name):
     try:
         ec2 = open_ec2(region=bottle.request.query.region)
@@ -129,7 +131,7 @@ def machine_command(name):
 
     return json.dumps({"result": "ok", "message": "Instance {} stopped".format(name)})
 
-@bottle.route("/machines/<name>/reboot", method="GET")
+@app.route("/machines/<name>/reboot", method="GET")
 def machine_command(name):
     try:
         ec2 = open_ec2(region=bottle.request.query.region)
@@ -143,6 +145,7 @@ def machine_command(name):
 if __name__ == "__main__":
     cfg = load_cfg()
 
-    bottle.run(host=cfg["service"]["listen"],
+    bottle.run(app=app,
+               host=cfg["service"]["listen"],
                port=int(cfg["service"]["port"]),
                debug=cfg["service"].getboolean("debug"))
