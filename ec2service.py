@@ -39,9 +39,9 @@ def list_ec2_instances(ec2conn, instance_id=None):
                     "tags": instance.tags,
                     "state": instance.state,
                     "launch time": instance.launch_time,
-                    "network": [dict(public_ip=i.publicIp,
+                    "network": [dict(public_ip=i.publicIp if hasattr(i, "publicIp") else None,
                                      # TODO: check public IP resolution in DNS
-                                     public_dns=i.publicDnsName,
+                                     public_dns=i.publicDnsName if hasattr(i, "publicDnsName") else None,
                                      private_dns=i.privateDnsName,
                                      private_ip=i.private_ip_address)
                                 for i in instance.interfaces],
