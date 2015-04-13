@@ -116,6 +116,17 @@ def machine_command(name):
 
     return json.dumps({"result": "ok", "message": "Instance {} stopped".format(name)})
 
+@bottle.route("/machines/<name>/reboot", method="GET")
+def machine_command(name):
+    try:
+        ec2 = open_ec2(region=bottle.request.query.region)
+        ec2.reboot_instances(instance_ids=[name])
+        ec2.close()
+    except ValueError as err:
+        raise bottle.HTTPError(status=500, body=str(err))
+
+    return json.dumps({"result": "ok", "message": "Instance {} rebooted".format(name)})
+
 if __name__ == "__main__":
     try:
         CFG.read(sys.argv[1])
