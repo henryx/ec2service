@@ -8,13 +8,22 @@ import configparser
 import json
 import sys
 
-# FIXME: for commodity, config file is declared as global variable. Change in future
-CFG = configparser.ConfigParser()
+def load_cfg():
+    cfg = configparser.ConfigParser()
+    try:
+        cfg.read(sys.argv[1])
+    except:
+        print("Usage: " + sys.argv[0] + " <configfile>")
+        sys.exit(1)
+
+    return cfg
 
 def open_ec2(region=None):
-    awskey = CFG["aws"]["key"]
-    awssecret = CFG["aws"]["secret"]
-    awsregion = region or CFG["aws"]["region"]
+    cfg = load_cfg()
+
+    awskey = cfg["aws"]["key"]
+    awssecret = cfg["aws"]["secret"]
+    awsregion = region or cfg["aws"]["region"]
 
     if not any(region.name == awsregion for region in boto.ec2.regions()):
         raise ValueError('Region "{}" not valid'.format(awsregion))
@@ -132,10 +141,8 @@ def machine_command(name):
     return json.dumps({"result": "ok", "message": "Instance {} rebooted".format(name)})
 
 if __name__ == "__main__":
-    try:
-        CFG.read(sys.argv[1])
-    except:
-        print("Usage: " + sys.argv[0] + " <configfile>")
-        sys.exit(1)
+    cfg = load_cfg()
 
-    bottle.run(host=CFG["service"]["listen"], port=int(CFG["service"]["port"]), debug=CFG["service"].getboolean("debug"))
+    bottle.run(host=cfg["service"]["listen"],
+               port=int(cfg["service"]["port"]),
+               debug=cfg["service"].getboolean("debug"))
