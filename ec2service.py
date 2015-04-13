@@ -54,6 +54,10 @@ def list_ec2_instances(ec2conn, instance_id=None):
 
     return results
 
+@bottle.hook('before_request')
+def strip_path():
+    bottle.request.environ['PATH_INFO'] = bottle.request.environ['PATH_INFO'].rstrip('/')
+
 @bottle.error(500)
 def error500(error):
     return json.dumps({"result": "ko", "message": error.body})
