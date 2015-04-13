@@ -12,9 +12,9 @@ import sys
 CFG = configparser.ConfigParser()
 
 def open_ec2(region=None):
-    awskey = CFG.get("aws", "key")
-    awssecret = CFG.get("aws", "secret")
-    awsregion = region or CFG.get("aws", "region")
+    awskey = CFG["aws"]["key"]
+    awssecret = CFG["aws"]["secret"]
+    awsregion = region or CFG["aws"]["region"]
 
     if not any(region.name == awsregion for region in boto.ec2.regions()):
         raise ValueError('Region "{}" not valid'.format(awsregion))
@@ -138,4 +138,4 @@ if __name__ == "__main__":
         print("Usage: " + sys.argv[0] + " <configfile>")
         sys.exit(1)
 
-    bottle.run(host=CFG.get("service", "listen"), port=CFG.get("service", "port"), debug=CFG["service"].getboolean("debug"))
+    bottle.run(host=CFG["service"]["listen"], port=int(CFG["service"]["port"]), debug=CFG["service"].getboolean("debug"))
