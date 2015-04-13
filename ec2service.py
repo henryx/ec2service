@@ -138,4 +138,4 @@ if __name__ == "__main__":
         print("Usage: " + sys.argv[0] + " <configfile>")
         sys.exit(1)
 
-    bottle.run(host=CFG.get("service", "listen"), port=CFG.get("service", "port"), debug=False)
+    bottle.run(host=CFG.get("service", "listen"), port=CFG.get("service", "port"), debug=CFG["service"].getboolean("debug"))
