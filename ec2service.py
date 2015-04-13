@@ -8,7 +8,7 @@ import configparser
 import json
 import sys
 
-app = bottle.Bottle
+app = bottle.Bottle()
 
 def load_cfg():
     cfg = configparser.ConfigParser()
