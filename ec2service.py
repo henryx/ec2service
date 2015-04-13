@@ -74,7 +74,7 @@ def machine_list():
         ec2.close()
 
         if len(machines) > 0:
-            data = {"result": "ok", "machines": machines}
+            data = {"result": "ok", "machine": machines, "total": len(machines)}
         else:
             raise bottle.HTTPError(status=500, body="No managed machines")
     except ValueError as err:
@@ -90,7 +90,7 @@ def machine_show(name):
         ec2.close()
 
         if len(machines) > 0:
-            data = {"result": "ok", "machine": machines}
+            data = {"result": "ok", "machine": machines, "total": len(machines)}
         else:
             raise bottle.HTTPError(status=500, body="No managed machines")
     except ValueError as err:
