@@ -46,6 +46,7 @@ def list_ec2_instances(ec2conn, instance_id=None):
             if "managed" in instance.tags and instance.tags["managed"] == "auto":
                 details = {
                     "instance-id": instance.id,
+                    "instance-type": instance.instance_type,
                     "placement": instance.placement,
                     "tags": instance.tags,
                     "state": instance.state,
