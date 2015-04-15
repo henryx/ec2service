@@ -45,18 +45,18 @@ def list_ec2_instances(ec2conn, instance_id=None):
         for instance in reservation.instances:
             if "managed" in instance.tags and instance.tags["managed"] == "auto":
                 details = {
-                    "id": instance.id,
+                    "instance-id": instance.id,
                     "placement": instance.placement,
                     "tags": instance.tags,
                     "state": instance.state,
-                    "launch time": instance.launch_time,
+                    "launch-time": instance.launch_time,
                     "network": [dict(public_ip=i.publicIp if hasattr(i, "publicIp") else None,
                                      # TODO: check public IP resolution in DNS
                                      public_dns=i.publicDnsName if hasattr(i, "publicDnsName") else None,
                                      private_dns=i.privateDnsName,
                                      private_ip=i.private_ip_address)
                                 for i in instance.interfaces],
-                    "security group": [dict(id=g.id, name=g.name)
+                    "security-group": [dict(id=g.id, name=g.name)
                                        for g in instance.groups]
                 }
 
