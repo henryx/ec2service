@@ -20,11 +20,11 @@ def load_cfg():
 
     return cfg
 
-def open_ec2(region=None):
+def open_ec2(region=None, key=None, secret=None):
     cfg = load_cfg()
 
-    awskey = cfg["aws"]["key"]
-    awssecret = cfg["aws"]["secret"]
+    awskey = key or cfg["aws"]["key"]
+    awssecret = secret or cfg["aws"]["secret"]
     awsregion = region or cfg["aws"]["region"]
 
     if not any(region.name == awsregion for region in boto.ec2.regions()):
@@ -81,7 +81,9 @@ def hello():
 @app.route("/machines", method="GET")
 def machine_list():
     try:
-        ec2 = open_ec2(region=bottle.request.query.region)
+        ec2 = open_ec2(region=bottle.request.query.region,
+                       key=bottle.request.query.key,
+                       secret=bottle.request.query.secret)
         machines = list_ec2_instances(ec2)
         ec2.close()
 
@@ -97,7 +99,9 @@ def machine_list():
 @app.route("/machines/<name>", method="GET")
 def machine_show(name):
     try:
-        ec2 = open_ec2(region=bottle.request.query.region)
+        ec2 = open_ec2(region=bottle.request.query.region,
+                       key=bottle.request.query.key,
+                       secret=bottle.request.query.secret)
         machines = list_ec2_instances(ec2, name)
         ec2.close()
 
@@ -113,7 +117,9 @@ def machine_show(name):
 @app.route("/machines/<name>/start", method="GET")
 def machine_command(name):
     try:
-        ec2 = open_ec2(region=bottle.request.query.region)
+        ec2 = open_ec2(region=bottle.request.query.region,
+                       key=bottle.request.query.key,
+                       secret=bottle.request.query.secret)
         ec2.start_instances(instance_ids=[name])
         ec2.close()
     except ValueError as err:
@@ -124,7 +130,9 @@ def machine_command(name):
 @app.route("/machines/<name>/stop", method="GET")
 def machine_command(name):
     try:
-        ec2 = open_ec2(region=bottle.request.query.region)
+        ec2 = open_ec2(region=bottle.request.query.region,
+                       key=bottle.request.query.key,
+                       secret=bottle.request.query.secret)
         ec2.stop_instances(instance_ids=[name])
         ec2.close()
     except ValueError as err:
@@ -135,7 +143,9 @@ def machine_command(name):
 @app.route("/machines/<name>/reboot", method="GET")
 def machine_command(name):
     try:
-        ec2 = open_ec2(region=bottle.request.query.region)
+        ec2 = open_ec2(region=bottle.request.query.region,
+                       key=bottle.request.query.key,
+                       secret=bottle.request.query.secret)
         ec2.reboot_instances(instance_ids=[name])
         ec2.close()
     except ValueError as err:
