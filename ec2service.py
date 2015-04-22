@@ -8,7 +8,7 @@ import configparser
 import json
 import sys
 
-app = bottle.Bottle()
+app = application = bottle.Bottle()
 
 def load_cfg():
     cfg = configparser.ConfigParser()
@@ -80,6 +80,7 @@ def hello():
 
 @app.route("/machines", method="GET")
 def machine_list():
+    bottle.response.headers['Content-type'] = 'application/json'
     try:
         ec2 = open_ec2(region=bottle.request.query.region,
                        key=bottle.request.query.key,
@@ -98,6 +99,7 @@ def machine_list():
 
 @app.route("/machines/<name>", method="GET")
 def machine_show(name):
+    bottle.response.headers['Content-type'] = 'application/json'
     try:
         ec2 = open_ec2(region=bottle.request.query.region,
                        key=bottle.request.query.key,
@@ -116,6 +118,7 @@ def machine_show(name):
 
 @app.route("/machines/<name>/start", method="GET")
 def machine_command(name):
+    bottle.response.headers['Content-type'] = 'application/json'
     try:
         ec2 = open_ec2(region=bottle.request.query.region,
                        key=bottle.request.query.key,
@@ -129,6 +132,7 @@ def machine_command(name):
 
 @app.route("/machines/<name>/stop", method="GET")
 def machine_command(name):
+    bottle.response.headers['Content-type'] = 'application/json'
     try:
         ec2 = open_ec2(region=bottle.request.query.region,
                        key=bottle.request.query.key,
@@ -142,6 +146,7 @@ def machine_command(name):
 
 @app.route("/machines/<name>/reboot", method="GET")
 def machine_command(name):
+    bottle.response.headers['Content-type'] = 'application/json'
     try:
         ec2 = open_ec2(region=bottle.request.query.region,
                        key=bottle.request.query.key,
