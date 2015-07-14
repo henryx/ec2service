@@ -78,7 +78,7 @@ def error500(error):
 def hello():
     return "Hello World!"
 
-@app.route("/machines", method="GET")
+@app.route("/instances", method="GET")
 def machine_list():
     bottle.response.headers['Content-type'] = 'application/json'
     try:
@@ -97,7 +97,7 @@ def machine_list():
 
     return json.dumps(data)
 
-@app.route("/machines/<name>", method="GET")
+@app.route("/instances/<name>", method="GET")
 def machine_show(name):
     bottle.response.headers['Content-type'] = 'application/json'
     try:
@@ -116,7 +116,7 @@ def machine_show(name):
 
     return json.dumps(data)
 
-@app.route("/machines/<name>/start", method="GET")
+@app.route("/instances/<name>/start", method="GET")
 def machine_command(name):
     bottle.response.headers['Content-type'] = 'application/json'
     try:
@@ -130,7 +130,7 @@ def machine_command(name):
 
     return json.dumps({"result": "ok", "message": "Instance {} started".format(name)})
 
-@app.route("/machines/<name>/stop", method="GET")
+@app.route("/instances/<name>/stop", method="GET")
 def machine_command(name):
     bottle.response.headers['Content-type'] = 'application/json'
     try:
@@ -144,7 +144,7 @@ def machine_command(name):
 
     return json.dumps({"result": "ok", "message": "Instance {} stopped".format(name)})
 
-@app.route("/machines/<name>/reboot", method="GET")
+@app.route("/instances/<name>/reboot", method="GET")
 def machine_command(name):
     bottle.response.headers['Content-type'] = 'application/json'
     try:
