@@ -41,7 +41,7 @@ def open_ec2(region=None, key=None, secret=None):
 def list_ec2_instances(ec2conn, instance_id=None):
     results = []
 
-    for reservation in ec2conn.get_all_reservations():
+    for reservation in ec2conn.get_all_reservations(instance_ids=[instance_id] if instance_id else None):
         for instance in reservation.instances:
             if "managed" in instance.tags and instance.tags["managed"] == "auto":
                 details = {
@@ -63,9 +63,7 @@ def list_ec2_instances(ec2conn, instance_id=None):
                                      created=v.create_time)
                                 for v in ec2conn.get_all_volumes(filters={'attachment.instance-id': instance.id})]
                 }
-
-                if not instance_id or instance_id == instance.id:
-                    results.append(details)
+                results.append(details)
 
     return results
 
