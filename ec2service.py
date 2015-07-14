@@ -88,7 +88,7 @@ def machine_list():
         machines = list_ec2_instances(ec2)
         ec2.close()
 
-        if len(machines) > 0:
+        if machines:
             data = {"result": "ok", "machine": machines, "total": len(machines)}
         else:
             raise bottle.HTTPError(status=500, body="No managed machines")
@@ -107,7 +107,7 @@ def machine_show(name):
         machines = list_ec2_instances(ec2, name)
         ec2.close()
 
-        if len(machines) > 0:
+        if machines:
             data = {"result": "ok", "machine": machines, "total": len(machines)}
         else:
             raise bottle.HTTPError(status=500, body="No managed machines")
