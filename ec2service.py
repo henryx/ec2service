@@ -8,6 +8,8 @@ import configparser
 import json
 import sys
 
+from contextlib import closing
+
 app = application = bottle.Bottle()
 
 def load_cfg():
@@ -83,16 +85,15 @@ def hello():
 def machine_list():
     bottle.response.headers['Content-type'] = 'application/json'
     try:
-        ec2 = open_ec2(region=bottle.request.query.region,
+        with closing(open_ec2(region=bottle.request.query.region,
                        key=bottle.request.query.key,
-                       secret=bottle.request.query.secret)
-        machines = list_ec2_instances(ec2)
-        ec2.close()
+                       secret=bottle.request.query.secret)) as ec2:
 
-        if machines:
-            data = {"result": "ok", "machine": machines, "total": len(machines)}
-        else:
-            raise bottle.HTTPError(status=500, body="No managed machines")
+            machines = list_ec2_instances(ec2)
+            if machines:
+                data = {"result": "ok", "machine": machines, "total": len(machines)}
+            else:
+                raise bottle.HTTPError(status=500, body="No managed machines")
     except ValueError as err:
         raise bottle.HTTPError(status=500, body=str(err))
 
@@ -102,16 +103,15 @@ def machine_list():
 def machine_show(name):
     bottle.response.headers['Content-type'] = 'application/json'
     try:
-        ec2 = open_ec2(region=bottle.request.query.region,
+        with closing(open_ec2(region=bottle.request.query.region,
                        key=bottle.request.query.key,
-                       secret=bottle.request.query.secret)
-        machines = list_ec2_instances(ec2, name)
-        ec2.close()
+                       secret=bottle.request.query.secret)) as ec2:
 
-        if machines:
-            data = {"result": "ok", "machine": machines, "total": len(machines)}
-        else:
-            raise bottle.HTTPError(status=500, body="No managed machine")
+            machines = list_ec2_instances(ec2, name)
+            if machines:
+                data = {"result": "ok", "machine": machines, "total": len(machines)}
+            else:
+                raise bottle.HTTPError(status=500, body="No managed machine")
     except ValueError as err:
         raise bottle.HTTPError(status=500, body=str(err))
 
@@ -121,17 +121,15 @@ def machine_show(name):
 def machine_command(name):
     bottle.response.headers['Content-type'] = 'application/json'
     try:
-        ec2 = open_ec2(region=bottle.request.query.region,
+        with closing(open_ec2(region=bottle.request.query.region,
                        key=bottle.request.query.key,
-                       secret=bottle.request.query.secret)
+                       secret=bottle.request.query.secret)) as ec2:
 
-        machines = list_ec2_instances(ec2, name)
-        if machines:
-            ec2.start_instances(instance_ids=[name])
-        else:
-            raise bottle.HTTPError(status=500, body="No managed machine")
-
-        ec2.close()
+            machines = list_ec2_instances(ec2, name)
+            if machines:
+                ec2.start_instances(instance_ids=[name])
+            else:
+                raise bottle.HTTPError(status=500, body="No managed machine")
     except ValueError as err:
         raise bottle.HTTPError(status=500, body=str(err))
 
@@ -141,17 +139,15 @@ def machine_command(name):
 def machine_command(name):
     bottle.response.headers['Content-type'] = 'application/json'
     try:
-        ec2 = open_ec2(region=bottle.request.query.region,
+        with closing(open_ec2(region=bottle.request.query.region,
                        key=bottle.request.query.key,
-                       secret=bottle.request.query.secret)
+                       secret=bottle.request.query.secret)) as ec2:
 
-        machines = list_ec2_instances(ec2, name)
-        if machines:
-            ec2.stop_instances(instance_ids=[name])
-        else:
-            raise bottle.HTTPError(status=500, body="No managed machine")
-
-        ec2.close()
+            machines = list_ec2_instances(ec2, name)
+            if machines:
+                ec2.stop_instances(instance_ids=[name])
+            else:
+                raise bottle.HTTPError(status=500, body="No managed machine")
     except ValueError as err:
         raise bottle.HTTPError(status=500, body=str(err))
 
@@ -161,17 +157,15 @@ def machine_command(name):
 def machine_command(name):
     bottle.response.headers['Content-type'] = 'application/json'
     try:
-        ec2 = open_ec2(region=bottle.request.query.region,
+        with closing(open_ec2(region=bottle.request.query.region,
                        key=bottle.request.query.key,
-                       secret=bottle.request.query.secret)
+                       secret=bottle.request.query.secret)) as ec2:
 
-        machines = list_ec2_instances(ec2, name)
-        if machines:
-            ec2.reboot_instances(instance_ids=[name])
-        else:
-            raise bottle.HTTPError(status=500, body="No managed machine")
-
-        ec2.close()
+            machines = list_ec2_instances(ec2, name)
+            if machines:
+                ec2.reboot_instances(instance_ids=[name])
+            else:
+                raise bottle.HTTPError(status=500, body="No managed machine")
     except ValueError as err:
         raise bottle.HTTPError(status=500, body=str(err))
 
