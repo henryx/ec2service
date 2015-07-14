@@ -58,7 +58,10 @@ def list_ec2_instances(ec2conn, instance_id=None):
                                      private_ip=i.private_ip_address)
                                 for i in instance.interfaces],
                     "security-group": [dict(id=g.id, name=g.name)
-                                       for g in instance.groups]
+                                       for g in instance.groups],
+                    "volumes": [dict(id=v.id, size=v.size, type=v.type,
+                                     created=v.create_time)
+                                for v in ec2conn.get_all_volumes(filters={'attachment.instance-id': instance.id})]
                 }
 
                 if not instance_id or instance_id == instance.id:
