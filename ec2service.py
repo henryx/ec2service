@@ -113,7 +113,7 @@ def machine_show(name):
         if machines:
             data = {"result": "ok", "machine": machines, "total": len(machines)}
         else:
-            raise bottle.HTTPError(status=500, body="No managed machines")
+            raise bottle.HTTPError(status=500, body="No managed machine")
     except ValueError as err:
         raise bottle.HTTPError(status=500, body=str(err))
 
@@ -126,7 +126,13 @@ def machine_command(name):
         ec2 = open_ec2(region=bottle.request.query.region,
                        key=bottle.request.query.key,
                        secret=bottle.request.query.secret)
-        ec2.start_instances(instance_ids=[name])
+
+        machines = list_ec2_instances(ec2, name)
+        if machines:
+            ec2.start_instances(instance_ids=[name])
+        else:
+            raise bottle.HTTPError(status=500, body="No managed machine")
+
         ec2.close()
     except ValueError as err:
         raise bottle.HTTPError(status=500, body=str(err))
@@ -140,7 +146,13 @@ def machine_command(name):
         ec2 = open_ec2(region=bottle.request.query.region,
                        key=bottle.request.query.key,
                        secret=bottle.request.query.secret)
-        ec2.stop_instances(instance_ids=[name])
+
+        machines = list_ec2_instances(ec2, name)
+        if machines:
+            ec2.stop_instances(instance_ids=[name])
+        else:
+            raise bottle.HTTPError(status=500, body="No managed machine")
+
         ec2.close()
     except ValueError as err:
         raise bottle.HTTPError(status=500, body=str(err))
@@ -154,7 +166,13 @@ def machine_command(name):
         ec2 = open_ec2(region=bottle.request.query.region,
                        key=bottle.request.query.key,
                        secret=bottle.request.query.secret)
-        ec2.reboot_instances(instance_ids=[name])
+
+        machines = list_ec2_instances(ec2, name)
+        if machines:
+            ec2.reboot_instances(instance_ids=[name])
+        else:
+            raise bottle.HTTPError(status=500, body="No managed machine")
+
         ec2.close()
     except ValueError as err:
         raise bottle.HTTPError(status=500, body=str(err))
