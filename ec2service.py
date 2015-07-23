@@ -3,6 +3,7 @@
 __author__ = 'ebianchi'
 
 import boto.ec2
+import boto.route53
 import bottle
 import configparser
 import json
@@ -39,6 +40,23 @@ def open_ec2(region=None, key=None, secret=None):
         raise ValueError("Problem when connecting to EC2")
 
     return ec2
+
+def open_route53(cfg):
+    r53 = boto.route53.connect_to_region(cfg["dns"]["region"],
+                                         aws_access_key_id=cfg["dns"]["key"],
+                                         aws_secret_access_key=cfg["dns"]["secret"])
+    return r53
+
+def manage_dns(address, ip, action):
+    cfg = load_cfg()
+    r53 = open_route53(cfg)
+    domain = cfg["dns"]["domain"]
+
+    zone = r53.get_zone(domain + ".")
+    change_set = boto.route53.record.ResourceRecordSets(r53, zone.id)
+    record =  change_set.add_change(action, address + "." + domain, "A")
+    record.add_value(ip)
+    change_set.commit()
 
 def list_ec2_instances(ec2conn, instance_id=None):
     results = []
@@ -120,6 +138,8 @@ def machine_show(name):
 @app.route("/instances/<name>/start", method="GET")
 def machine_command(name):
     bottle.response.headers['Content-type'] = 'application/json'
+    hostname = bottle.request.query.hostname or None
+
     try:
         with closing(open_ec2(region=bottle.request.query.region,
                        key=bottle.request.query.key,
@@ -128,6 +148,8 @@ def machine_command(name):
             machines = list_ec2_instances(ec2, name)
             if machines:
                 ec2.start_instances(instance_ids=[name])
+                if hostname:
+                    manage_dns(hostname, machines[0]["network"]["public_ip"], "CREATE")
             else:
                 raise bottle.HTTPError(status=500, body="No managed machine")
     except ValueError as err:
@@ -138,6 +160,8 @@ def machine_command(name):
 @app.route("/instances/<name>/stop", method="GET")
 def machine_command(name):
     bottle.response.headers['Content-type'] = 'application/json'
+    hostname = bottle.request.query.hostname or None
+
     try:
         with closing(open_ec2(region=bottle.request.query.region,
                        key=bottle.request.query.key,
@@ -146,6 +170,8 @@ def machine_command(name):
             machines = list_ec2_instances(ec2, name)
             if machines:
                 ec2.stop_instances(instance_ids=[name])
+                if hostname:
+                    manage_dns(hostname, machines[0]["network"]["public_ip"], "DELETE")
             else:
                 raise bottle.HTTPError(status=500, body="No managed machine")
     except ValueError as err:
