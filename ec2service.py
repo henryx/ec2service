@@ -13,6 +13,7 @@ from contextlib import closing
 
 app = application = bottle.Bottle()
 
+
 def load_cfg():
     cfg = configparser.ConfigParser()
     try:
@@ -22,6 +23,7 @@ def load_cfg():
         sys.exit(1)
 
     return cfg
+
 
 def open_ec2(region=None, key=None, secret=None):
     cfg = load_cfg()
@@ -41,11 +43,14 @@ def open_ec2(region=None, key=None, secret=None):
 
     return ec2
 
+
 def open_route53(cfg):
     r53 = boto.route53.connect_to_region(cfg["dns"]["region"],
                                          aws_access_key_id=cfg["dns"]["key"],
-                                         aws_secret_access_key=cfg["dns"]["secret"])
+                                         aws_secret_access_key=cfg["dns"][
+                                             "secret"])
     return r53
+
 
 def manage_dns(address, ip, action):
     cfg = load_cfg()
@@ -54,16 +59,19 @@ def manage_dns(address, ip, action):
 
     zone = r53.get_zone(domain + ".")
     change_set = boto.route53.record.ResourceRecordSets(r53, zone.id)
-    record =  change_set.add_change(action, address + "." + domain, "A")
+    record = change_set.add_change(action, address + "." + domain, "A")
     record.add_value(ip)
     change_set.commit()
+
 
 def list_ec2_instances(ec2conn, instance_id=None):
     results = []
 
-    for reservation in ec2conn.get_all_reservations(instance_ids=[instance_id] if instance_id else None):
+    for reservation in ec2conn.get_all_reservations(
+            instance_ids=[instance_id] if instance_id else None):
         for instance in reservation.instances:
-            if "managed" in instance.tags and instance.tags["managed"] == "auto":
+            if "managed" in instance.tags and instance.tags[
+               "managed"] == "auto":
                 details = {
                     "instance-id": instance.id,
                     "instance-type": instance.instance_type,
@@ -71,9 +79,11 @@ def list_ec2_instances(ec2conn, instance_id=None):
                     "tags": instance.tags,
                     "state": instance.state,
                     "launch-time": instance.launch_time,
-                    "network": [dict(public_ip=i.publicIp if hasattr(i, "publicIp") else None,
+                    "network": [dict(public_ip=i.publicIp if hasattr(i,
+                                                                     "publicIp") else None,
                                      # TODO: check public IP resolution in DNS
-                                     public_dns=i.publicDnsName if hasattr(i, "publicDnsName") else None,
+                                     public_dns=i.publicDnsName if hasattr(i,
+                                                                           "publicDnsName") else None,
                                      private_dns=i.privateDnsName,
                                      private_ip=i.private_ip_address)
                                 for i in instance.interfaces],
@@ -81,35 +91,42 @@ def list_ec2_instances(ec2conn, instance_id=None):
                                        for g in instance.groups],
                     "volumes": [dict(id=v.id, size=v.size, type=v.type,
                                      created=v.create_time)
-                                for v in ec2conn.get_all_volumes(filters={'attachment.instance-id': instance.id})]
+                                for v in ec2conn.get_all_volumes(
+                            filters={'attachment.instance-id': instance.id})]
                 }
                 results.append(details)
 
     return results
 
+
 @app.hook('before_request')
 def strip_path():
-    bottle.request.environ['PATH_INFO'] = bottle.request.environ['PATH_INFO'].rstrip('/')
+    bottle.request.environ['PATH_INFO'] = bottle.request.environ[
+        'PATH_INFO'].rstrip('/')
+
 
 @app.error(500)
 def error500(error):
     return json.dumps({"result": "ko", "message": error.body})
 
+
 @app.route("/")
 def hello():
     return "Hello World!"
+
 
 @app.route("/instances", method="GET")
 def machine_list():
     bottle.response.headers['Content-type'] = 'application/json'
     try:
         with closing(open_ec2(region=bottle.request.query.region,
-                       key=bottle.request.query.key,
-                       secret=bottle.request.query.secret)) as ec2:
+                              key=bottle.request.query.key,
+                              secret=bottle.request.query.secret)) as ec2:
 
             machines = list_ec2_instances(ec2)
             if machines:
-                data = {"result": "ok", "machine": machines, "total": len(machines)}
+                data = {"result": "ok", "machine": machines,
+                        "total": len(machines)}
             else:
                 raise bottle.HTTPError(status=500, body="No managed machines")
     except ValueError as err:
@@ -117,23 +134,26 @@ def machine_list():
 
     return json.dumps(data)
 
+
 @app.route("/instances/<name>", method="GET")
 def machine_show(name):
     bottle.response.headers['Content-type'] = 'application/json'
     try:
         with closing(open_ec2(region=bottle.request.query.region,
-                       key=bottle.request.query.key,
-                       secret=bottle.request.query.secret)) as ec2:
+                              key=bottle.request.query.key,
+                              secret=bottle.request.query.secret)) as ec2:
 
             machines = list_ec2_instances(ec2, name)
             if machines:
-                data = {"result": "ok", "machine": machines, "total": len(machines)}
+                data = {"result": "ok", "machine": machines,
+                        "total": len(machines)}
             else:
                 raise bottle.HTTPError(status=500, body="No managed machine")
     except ValueError as err:
         raise bottle.HTTPError(status=500, body=str(err))
 
     return json.dumps(data)
+
 
 @app.route("/instances/<name>/start", method="GET")
 def machine_command(name):
@@ -142,20 +162,23 @@ def machine_command(name):
 
     try:
         with closing(open_ec2(region=bottle.request.query.region,
-                       key=bottle.request.query.key,
-                       secret=bottle.request.query.secret)) as ec2:
+                              key=bottle.request.query.key,
+                              secret=bottle.request.query.secret)) as ec2:
 
             machines = list_ec2_instances(ec2, name)
             if machines:
                 ec2.start_instances(instance_ids=[name])
                 if hostname:
-                    manage_dns(hostname, machines[0]["network"]["public_ip"], "CREATE")
+                    manage_dns(hostname, machines[0]["network"]["public_ip"],
+                               "CREATE")
             else:
                 raise bottle.HTTPError(status=500, body="No managed machine")
     except ValueError as err:
         raise bottle.HTTPError(status=500, body=str(err))
 
-    return json.dumps({"result": "ok", "message": "Instance {} started".format(name)})
+    return json.dumps(
+        {"result": "ok", "message": "Instance {} started".format(name)})
+
 
 @app.route("/instances/<name>/stop", method="GET")
 def machine_command(name):
@@ -164,28 +187,31 @@ def machine_command(name):
 
     try:
         with closing(open_ec2(region=bottle.request.query.region,
-                       key=bottle.request.query.key,
-                       secret=bottle.request.query.secret)) as ec2:
+                              key=bottle.request.query.key,
+                              secret=bottle.request.query.secret)) as ec2:
 
             machines = list_ec2_instances(ec2, name)
             if machines:
                 ec2.stop_instances(instance_ids=[name])
                 if hostname:
-                    manage_dns(hostname, machines[0]["network"]["public_ip"], "DELETE")
+                    manage_dns(hostname, machines[0]["network"]["public_ip"],
+                               "DELETE")
             else:
                 raise bottle.HTTPError(status=500, body="No managed machine")
     except ValueError as err:
         raise bottle.HTTPError(status=500, body=str(err))
 
-    return json.dumps({"result": "ok", "message": "Instance {} stopped".format(name)})
+    return json.dumps(
+        {"result": "ok", "message": "Instance {} stopped".format(name)})
+
 
 @app.route("/instances/<name>/reboot", method="GET")
 def machine_command(name):
     bottle.response.headers['Content-type'] = 'application/json'
     try:
         with closing(open_ec2(region=bottle.request.query.region,
-                       key=bottle.request.query.key,
-                       secret=bottle.request.query.secret)) as ec2:
+                              key=bottle.request.query.key,
+                              secret=bottle.request.query.secret)) as ec2:
 
             machines = list_ec2_instances(ec2, name)
             if machines:
@@ -195,7 +221,9 @@ def machine_command(name):
     except ValueError as err:
         raise bottle.HTTPError(status=500, body=str(err))
 
-    return json.dumps({"result": "ok", "message": "Instance {} rebooted".format(name)})
+    return json.dumps(
+        {"result": "ok", "message": "Instance {} rebooted".format(name)})
+
 
 if __name__ == "__main__":
     cfg = load_cfg()
