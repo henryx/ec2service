@@ -75,6 +75,7 @@ def list_ec2_instances(ec2conn, instance_id=None):
                 details = {
                     "instance-id": instance.id,
                     "instance-type": instance.instance_type,
+                    "region": reservation.region.name,
                     "placement": instance.placement,
                     "tags": instance.tags,
                     "state": instance.state,
