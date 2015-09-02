@@ -70,8 +70,7 @@ def list_ec2_instances(ec2conn, instance_id=None):
     for reservation in ec2conn.get_all_reservations(
             instance_ids=[instance_id] if instance_id else None):
         for instance in reservation.instances:
-            if "managed" in instance.tags and instance.tags[
-               "managed"] == "auto":
+            if instance.tags.get("managed", "") == "auto":
                 details = {
                     "instance-id": instance.id,
                     "instance-type": instance.instance_type,
