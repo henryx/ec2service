@@ -45,10 +45,13 @@ def open_ec2(region=None, key=None, secret=None):
 
 
 def open_route53(cfg):
-    r53 = boto.route53.connect_to_region(cfg["dns"]["region"],
-                                         aws_access_key_id=cfg["dns"]["key"],
-                                         aws_secret_access_key=cfg["dns"][
-                                             "secret"])
+    region = cfg["dns"]["region"]
+    secret = cfg["dns"]["secret"]
+    key = cfg["dns"]["key"]
+
+    r53 = boto.route53.connect_to_region(region,
+                                         aws_access_key_id=key,
+                                         aws_secret_access_key=secret)
     return r53
 
 
