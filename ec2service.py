@@ -52,6 +52,10 @@ def open_route53(cfg):
     r53 = boto.route53.connect_to_region(region,
                                          aws_access_key_id=key,
                                          aws_secret_access_key=secret)
+
+    if not r53:
+        raise ValueError("Problem when connecting to Route53")
+
     return r53
 
 
