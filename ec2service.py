@@ -25,7 +25,34 @@ def load_cfg():
     return cfg
 
 
-def open_ec2(region=None, key=None, secret=None):
+def r53_open_conn(cfg):
+    region = cfg["dns"]["region"]
+    secret = cfg["dns"]["secret"]
+    key = cfg["dns"]["key"]
+
+    r53 = boto.route53.connect_to_region(region,
+                                         aws_access_key_id=key,
+                                         aws_secret_access_key=secret)
+
+    if not r53:
+        raise ValueError("Problem when connecting to Route53")
+
+    return r53
+
+
+def r53_manage(address, ip, action):
+    cfg = load_cfg()
+    r53 = r53_open_conn(cfg)
+    domain = cfg["dns"]["domain"]
+
+    zone = r53.get_zone(domain + ".")
+    change_set = boto.route53.record.ResourceRecordSets(r53, zone.id)
+    record = change_set.add_change(action, address + "." + domain, "A")
+    record.add_value(ip)
+    change_set.commit()
+
+
+def ec2_open_conn(region=None, key=None, secret=None):
     cfg = load_cfg()
 
     awskey = key or cfg["aws"]["key"]
@@ -44,34 +71,7 @@ def open_ec2(region=None, key=None, secret=None):
     return ec2
 
 
-def open_route53(cfg):
-    region = cfg["dns"]["region"]
-    secret = cfg["dns"]["secret"]
-    key = cfg["dns"]["key"]
-
-    r53 = boto.route53.connect_to_region(region,
-                                         aws_access_key_id=key,
-                                         aws_secret_access_key=secret)
-
-    if not r53:
-        raise ValueError("Problem when connecting to Route53")
-
-    return r53
-
-
-def manage_dns(address, ip, action):
-    cfg = load_cfg()
-    r53 = open_route53(cfg)
-    domain = cfg["dns"]["domain"]
-
-    zone = r53.get_zone(domain + ".")
-    change_set = boto.route53.record.ResourceRecordSets(r53, zone.id)
-    record = change_set.add_change(action, address + "." + domain, "A")
-    record.add_value(ip)
-    change_set.commit()
-
-
-def list_ec2_instances(ec2conn, instance_id=None):
+def ec2_instance_list(ec2conn, instance_id=None):
     results = []
 
     for reservation in ec2conn.get_all_reservations(
@@ -107,14 +107,14 @@ def list_ec2_instances(ec2conn, instance_id=None):
     return results
 
 
-def instance_ops(operation, name=None, hostname=None):
+def ec2_instance_ops(operation, name=None, hostname=None):
     data = {}
     try:
         region = bottle.request.query.region
         key = bottle.request.query.key
         secret = bottle.request.query.secret
-        with closing(open_ec2(region, key, secret)) as ec2:
-            machines = list_ec2_instances(ec2, name)
+        with closing(ec2_open_conn(region, key, secret)) as ec2:
+            machines = ec2_instance_list(ec2, name)
             if machines:
                 if operation == "list":
                     data = {"result": "ok",
@@ -124,7 +124,7 @@ def instance_ops(operation, name=None, hostname=None):
                 elif operation == "start":
                     ec2.start_instances(instance_ids=[name])
                     if hostname:
-                        manage_dns(hostname,
+                        r53_manage(hostname,
                                    machines[0]["network"]["public_ip"],
                                    "CREATE")
                     data = {"result": "ok",
@@ -132,7 +132,7 @@ def instance_ops(operation, name=None, hostname=None):
                 elif operation == "stop":
                     ec2.stop_instances(instance_ids=[name])
                     if hostname:
-                        manage_dns(hostname,
+                        r53_manage(hostname,
                                    machines[0]["network"]["public_ip"],
                                    "DELETE")
                     data = {"result": "ok",
@@ -167,35 +167,35 @@ def hello():
 
 
 @app.route("/instances", method="GET")
-def machine_list():
+def instances_list():
     bottle.response.headers['Content-type'] = 'application/json'
-    return json.dumps(instance_ops("list"))
+    return json.dumps(ec2_instance_ops("list"))
 
 
 @app.route("/instances/<name>", method="GET")
-def machine_show(name):
+def instances_show(name):
     bottle.response.headers['Content-type'] = 'application/json'
-    return json.dumps(instance_ops("list", name))
+    return json.dumps(ec2_instance_ops("list", name))
 
 
 @app.route("/instances/<name>/start", method="GET")
-def machine_command(name):
+def instances_command(name):
     bottle.response.headers['Content-type'] = 'application/json'
     hostname = bottle.request.query.hostname or None
-    return json.dumps(instance_ops("start", name, hostname))
+    return json.dumps(ec2_instance_ops("start", name, hostname))
 
 
 @app.route("/instances/<name>/stop", method="GET")
-def machine_command(name):
+def instances_command(name):
     bottle.response.headers['Content-type'] = 'application/json'
     hostname = bottle.request.query.hostname or None
-    return json.dumps(instance_ops("stop", name, hostname))
+    return json.dumps(ec2_instance_ops("stop", name, hostname))
 
 
 @app.route("/instances/<name>/reboot", method="GET")
-def machine_command(name):
+def instances_command(name):
     bottle.response.headers['Content-type'] = 'application/json'
-    return json.dumps(instance_ops("reboot", name))
+    return json.dumps(ec2_instance_ops("reboot", name))
 
 
 if __name__ == "__main__":
