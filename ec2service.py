@@ -178,24 +178,12 @@ def instances_show(name):
     return json.dumps(ec2_instance_ops("list", name))
 
 
-@app.route("/instances/<name>/start", method="GET")
-def instances_command(name):
+@app.route("/instances/<name>/<command:re:(start|stop|reboot)>", method="GET")
+def instances_command(name, command):
     bottle.response.headers['Content-type'] = 'application/json'
     hostname = bottle.request.query.hostname or None
-    return json.dumps(ec2_instance_ops("start", name, hostname))
 
-
-@app.route("/instances/<name>/stop", method="GET")
-def instances_command(name):
-    bottle.response.headers['Content-type'] = 'application/json'
-    hostname = bottle.request.query.hostname or None
-    return json.dumps(ec2_instance_ops("stop", name, hostname))
-
-
-@app.route("/instances/<name>/reboot", method="GET")
-def instances_command(name):
-    bottle.response.headers['Content-type'] = 'application/json'
-    return json.dumps(ec2_instance_ops("reboot", name))
+    return json.dumps(ec2_instance_ops(command, name, hostname))
 
 
 if __name__ == "__main__":
