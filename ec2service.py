@@ -52,12 +52,11 @@ def r53_manage(address, ip, action):
     change_set.commit()
 
 
-def ec2_open_conn(region=None, key=None, secret=None):
+def ec2_open_conn(awsregion, account):
     cfg = load_cfg()
 
-    awskey = key or cfg["aws"]["key"]
-    awssecret = secret or cfg["aws"]["secret"]
-    awsregion = region or cfg["aws"]["region"]
+    awskey = cfg[account]["key"]
+    awssecret = cfg[account]["secret"]
 
     if not any(region.name == awsregion for region in boto.ec2.regions()):
         raise ValueError('Region "{}" not valid'.format(awsregion))
@@ -111,9 +110,15 @@ def ec2_instance_ops(operation, name=None, hostname=None):
     data = {}
     try:
         region = bottle.request.query.region
-        key = bottle.request.query.key
-        secret = bottle.request.query.secret
-        with closing(ec2_open_conn(region, key, secret)) as ec2:
+        account = bottle.request.query.account
+
+        if not region:
+            raise ValueError("Region not selected")
+
+        if not account:
+            raise ValueError("Account not selected")
+
+        with closing(ec2_open_conn(region, account)) as ec2:
             machines = ec2_instance_list(ec2, name)
             if machines:
                 if operation == "list":
