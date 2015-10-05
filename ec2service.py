@@ -25,31 +25,32 @@ def load_cfg():
     return cfg
 
 
-def r53_open_conn(cfg):
-    region = cfg["dns"]["region"]
-    secret = cfg["dns"]["secret"]
-    key = cfg["dns"]["key"]
-
-    r53 = boto.route53.connect_to_region(region,
-                                         aws_access_key_id=key,
-                                         aws_secret_access_key=secret)
-
-    if not r53:
-        raise ValueError("Problem when connecting to Route53")
-
-    return r53
-
-
-def r53_manage(address, ip, action):
-    cfg = load_cfg()
-    r53 = r53_open_conn(cfg)
-    domain = cfg["dns"]["domain"]
-
-    zone = r53.get_zone(domain + ".")
-    change_set = boto.route53.record.ResourceRecordSets(r53, zone.id)
-    record = change_set.add_change(action, address + "." + domain, "A")
-    record.add_value(ip)
-    change_set.commit()
+# TODO: set hostname in Route53
+#  def r53_open_conn(cfg):
+#     region = cfg["dns"]["region"]
+#     secret = cfg["dns"]["secret"]
+#     key = cfg["dns"]["key"]
+#
+#     r53 = boto.route53.connect_to_region(region,
+#                                          aws_access_key_id=key,
+#                                          aws_secret_access_key=secret)
+#
+#     if not r53:
+#         raise ValueError("Problem when connecting to Route53")
+#
+#     return r53
+#
+#
+# def r53_manage(address, ip, action):
+#     cfg = load_cfg()
+#     r53 = r53_open_conn(cfg)
+#     domain = cfg["dns"]["domain"]
+#
+#     zone = r53.get_zone(domain + ".")
+#     change_set = boto.route53.record.ResourceRecordSets(r53, zone.id)
+#     record = change_set.add_change(action, address + "." + domain, "A")
+#     record.add_value(ip)
+#     change_set.commit()
 
 
 def ec2_open_conn(awsregion, account):
@@ -128,18 +129,18 @@ def ec2_instance_ops(operation, name=None, hostname=None):
                             }
                 elif operation == "start":
                     ec2.start_instances(instance_ids=[name])
-                    if hostname:
-                        r53_manage(hostname,
-                                   machines[0]["network"]["public_ip"],
-                                   "CREATE")
+                    # if hostname:
+                    #     r53_manage(hostname,
+                    #                machines[0]["network"]["public_ip"],
+                    #                "CREATE")
                     data = {"result": "ok",
                             "message": "Instance {} started".format(name)}
                 elif operation == "stop":
                     ec2.stop_instances(instance_ids=[name])
-                    if hostname:
-                        r53_manage(hostname,
-                                   machines[0]["network"]["public_ip"],
-                                   "DELETE")
+                    # if hostname:
+                    #     r53_manage(hostname,
+                    #                machines[0]["network"]["public_ip"],
+                    #                "DELETE")
                     data = {"result": "ok",
                             "message": "Instance {} stopped".format(name)}
                 elif operation == "reboot":
