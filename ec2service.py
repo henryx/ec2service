@@ -71,7 +71,7 @@ def ec2_open_conn(awsregion, account):
     return ec2
 
 
-def ec2_instance_list(ec2conn, instance_id=None):
+def ec2_instance_list(ec2conn, account, instance_id=None):
     results = []
 
     for reservation in ec2conn.get_all_reservations(
@@ -79,6 +79,7 @@ def ec2_instance_list(ec2conn, instance_id=None):
         for instance in reservation.instances:
             if instance.tags.get("managed", "") == "auto":
                 details = {
+                    "account": account,
                     "instance-id": instance.id,
                     "instance-type": instance.instance_type,
                     "region": reservation.region.name,
@@ -120,7 +121,7 @@ def ec2_instance_ops(operation, name=None, hostname=None):
             raise ValueError("Account not selected")
 
         with closing(ec2_open_conn(region, account)) as ec2:
-            machines = ec2_instance_list(ec2, name)
+            machines = ec2_instance_list(ec2, account, name)
             if machines:
                 if operation == "list":
                     data = {"result": "ok",
